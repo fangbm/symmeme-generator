@@ -1,4 +1,4 @@
-# 🪞 Symmeme Generator
+# 🪞 ？！强强！？生成器
 
 一个纯前端的图片对称处理工具，专为生成对称表情包（Symmetrical Memes）设计。支持自定义对称轴位置和方向，可部署在 Cloudflare Pages 上，无需后端服务器，所有处理均在本地浏览器完成，保护用户隐私。
 
