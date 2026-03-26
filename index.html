@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>？！强强！？生成器 - 对称表情包制作工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.4);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            opacity: 0.95;
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .upload-section {
+            border: 3px dashed #cbd5e0;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            background: #f7fafc;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .upload-section:hover, .upload-section.dragover {
+            border-color: #2a5298;
+            background: #ebf4ff;
+            transform: translateY(-2px);
+        }
+
+        .upload-section input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .upload-icon {
+            font-size: 56px;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            font-size: 1.3em;
+            color: #4a5568;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .upload-hint {
+            color: #718096;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        /* 图片展示区域 - 无文字纯图片 */
+        .demo-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px dashed #e2e8f0;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 768px) {
+            .demo-grid {
+                grid-template-columns: 1fr;
+                max-width: 300px;
+            }
+        }
+
+        .demo-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background: white;
+            line-height: 0;
+        }
+
+        .demo-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.18);
+        }
+
+        .demo-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .workspace {
+            display: none;
+        }
+
+        .workspace.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .preview-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 968px) {
+            .preview-wrapper {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .preview-box {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            position: relative;
+        }
+
+        .preview-box h3 {
+            margin-bottom: 15px;
+            color: #2d3748;
+            font-size: 0.95em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .preview-container {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            background: repeating-conic-gradient(#e2e8f0 0% 25%, transparent 0% 50%) 50% / 20px 20px;
+            border-radius: 8px;
+            overflow: hidden;
+            line-height: 0;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 500px;
+            display: block;
+            margin: 0 auto;
+            transition: opacity 0.3s ease;
+        }
+
+        .preview-image.pending {
+            opacity: 0.4;
+            filter: grayscale(0.3);
+        }
+
+        .axis-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e53e3e;
+            pointer-events: none;
+            box-shadow: 0 0 10px rgba(229, 62, 62, 0.6);
+            z-index: 10;
+            transition: left 0.1s ease;
+        }
+
+        .axis-line::before {
+            content: '对称轴';
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #e53e3e;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .axis-line::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 12px;
+            background: #e53e3e;
+            border: 2px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 0 2px #e53e3e;
+        }
+
+        .pending-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            backdrop-filter: blur(2px);
+        }
+
+        .pending-overlay.active {
+            display: flex;
+        }
+
+        .pending-text {
+            background: #2a5298;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.9em;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+        }
+
+        .controls-panel {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 30px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .control-section {
+            margin-bottom: 25px;
+        }
+
+        .control-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 0.85em;
+            color: #4a5568;
+            font-weight: 700;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .symmetry-mode {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .mode-btn:hover {
+            border-color: #2a5298;
+            color: #2a5298;
+        }
+
+        .mode-btn.active {
+            border-color: #2a5298;
+            background: #2a5298;
+            color: white;
+        }
+
+        .slider-container {
+            margin-bottom: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        .slider-label {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .slider-value {
+            background: #2a5298;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e2e8f0;
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #2a5298;
+            cursor: grab;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            transition: transform 0.1s, box-shadow 0.1s;
+            border: 3px solid white;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+
+        .slider::-webkit-slider-thumb:active {
+            cursor: grabbing;
+            transform: scale(1.1);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #2a5298;
+            cursor: grab;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .slider-hint {
+            margin-top: 8px;
+            font-size: 0.8em;
+            color: #718096;
+            text-align: center;
+            font-style: italic;
+        }
+
+        .text-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .text-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .input-label {
+            font-size: 0.85em;
+            color: #4a5568;
+            font-weight: 600;
+        }
+
+        .text-input, select {
+            padding: 10px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.95em;
+            transition: border-color 0.3s;
+            background: white;
+        }
+
+        .text-input:focus, select:focus {
+            outline: none;
+            border-color: #2a5298;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-wrapper input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #2a5298;
+            cursor: pointer;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(42, 82, 152, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(42, 82, 152, 0.6);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .hidden-canvas {
+            display: none;
+        }
+
+        .processing-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .processing-overlay.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #2a5298;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .info-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #ebf4ff;
+            color: #2a5298;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .fill-mode-hint {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e6fffa;
+            border: 1px solid #81e6d9;
+            border-radius: 6px;
+            font-size: 0.85em;
+            color: #234e52;
+        }
+
+        .github-float {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 999;
+            text-decoration: none;
+            border: 2px solid #e2e8f0;
+        }
+
+        .github-float:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.15);
+            border-color: #2a5298;
+        }
+
+        .github-float:active {
+            transform: translateY(-2px) scale(0.98);
+        }
+
+        .github-float svg {
+            width: 32px;
+            height: 32px;
+            fill: #333;
+            transition: fill 0.3s ease;
+        }
+
+        .github-float:hover svg {
+            fill: #2a5298;
+        }
+
+        @media (max-width: 768px) {
+            .github-float {
+                bottom: 20px;
+                right: 20px;
+                width: 50px;
+                height: 50px;
+            }
+            
+            .github-float svg {
+                width: 26px;
+                height: 26px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+
+        .github-tooltip {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            background: #2d3748;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85em;
+            font-weight: 500;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            transform: translateY(10px);
+            z-index: 998;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .github-tooltip::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            right: 24px;
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 6px solid #2d3748;
+        }
+
+        .github-float:hover + .github-tooltip,
+        .github-tooltip.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            .github-tooltip {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>？！强强！？生成器</h1>
+            <p>一键生成对称魔性表情包</p>
+        </div>
+
+        <div class="main-content">
+            <!-- 上传区域 -->
+            <div class="upload-section" id="dropZone">
+                <input type="file" id="fileInput" accept="image/*">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">点击或拖拽上传图片</div>
+                <div class="upload-hint">支持 JPG、PNG、WebP 格式</div>
+                
+                <!-- 纯图片展示区域 -->
+                <div class="demo-section">
+                    <div class="demo-grid">
+                        <div class="demo-item">
+                            <img src="./demo1.png" alt="" class="demo-image">
+                        </div>
+                        <div class="demo-item">
+                            <img src="./demo2.png" alt="" class="demo-image">
+                        </div>
+                        <div class="demo-item">
+                            <img src="./demo3.png" alt="" class="demo-image">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 工作区 -->
+            <div class="workspace" id="workspace">
+                <div class="preview-wrapper">
+                    <div class="preview-box">
+                        <h3>
+                            <span>📷</span>
+                            原始图片
+                        </h3>
+                        <div class="preview-container">
+                            <img id="originalPreview" class="preview-image" alt="">
+                            <div class="axis-line" id="axisLineOriginal" style="left: 50%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="preview-box">
+                        <h3>
+                            <span>✨</span>
+                            处理效果
+                            <div class="info-badge" id="modeBadge">左 → 右</div>
+                        </h3>
+                        <div class="preview-container" id="processedContainer">
+                            <img id="processedPreview" class="preview-image" alt="">
+                            <div class="pending-overlay" id="pendingOverlay">
+                                <div class="pending-text">🖱️ 释放鼠标查看效果</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls-panel">
+                    <div class="control-section">
+                        <div class="section-title">对称方向</div>
+                        <div class="symmetry-mode">
+                            <button class="mode-btn active" id="modeLeftToRight" onclick="setMode('leftToRight')">
+                                <span>←</span>
+                                左半边 → 右半边
+                            </button>
+                            <button class="mode-btn" id="modeRightToLeft" onclick="setMode('rightToLeft')">
+                                <span>→</span>
+                                右半边 → 左半边
+                            </button>
+                        </div>
+                        <div class="fill-mode-hint">
+                            💡 自动拉伸填充：当两侧宽度不同时，镜像内容会自动拉伸以填满目标区域
+                        </div>
+                    </div>
+
+                    <div class="control-section">
+                        <div class="section-title">对称轴位置</div>
+                        <div class="slider-container">
+                            <div class="slider-header">
+                                <span class="slider-label">水平位置</span>
+                                <span class="slider-value" id="axisValue">50%</span>
+                            </div>
+                            <input type="range" class="slider" id="axisSlider" min="1" max="99" value="50">
+                            <div class="slider-hint">拖动调整位置，释放鼠标后自动渲染预览</div>
+                        </div>
+                    </div>
+
+                    <div class="control-section">
+                        <label class="checkbox-wrapper">
+                            <input type="checkbox" id="addText" checked>
+                            <span>添加文字水印（可选）</span>
+                        </label>
+                        
+                        <div id="textOptions" style="display: block;">
+                            <div class="text-controls">
+                                <div class="input-group">
+                                    <label class="input-label">文字内容</label>
+                                    <input type="text" id="textContent" class="text-input" value="？！强强！？">
+                                </div>
+                                <div class="input-group">
+                                    <label class="input-label">字体大小</label>
+                                    <input type="number" id="fontSize" class="text-input" value="32" min="10" max="100">
+                                </div>
+                                <div class="input-group">
+                                    <label class="input-label">垂直位置 (%)</label>
+                                    <input type="number" id="textY" class="text-input" value="90" min="0" max="100">
+                                </div>
+                                <div class="input-group">
+                                    <label class="input-label">文字颜色</label>
+                                    <input type="color" id="textColor" class="text-input" value="#ffffff" style="height: 40px; padding: 2px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="control-section" style="margin-top: 25px; padding-top: 25px; border-top: 2px solid #e2e8f0;">
+                        <div class="section-title">输出设置</div>
+                        <div class="text-controls">
+                            <div class="input-group">
+                                <label class="input-label">格式</label>
+                                <select id="outputFormat">
+                                    <option value="image/jpeg">JPEG</option>
+                                    <option value="image/png">PNG</option>
+                                    <option value="image/webp">WebP</option>
+                                </select>
+                            </div>
+                            <div class="input-group" id="qualityGroup">
+                                <label class="input-label">质量 (<span id="qualityLabel">90%</span>)</label>
+                                <input type="range" id="quality" class="slider" min="10" max="100" value="90" style="margin-top: 5px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="downloadImage()">
+                        <span>💾</span>
+                        下载图片
+                    </button>
+                    <button class="btn btn-secondary" onclick="resetAll()">
+                        <span>🔄</span>
+                        处理新图片
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <a href="https://github.com/fangbm/symmeme-generator" target="_blank" rel="noopener noreferrer" class="github-float" aria-label="查看 GitHub 仓库">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+        </svg>
+    </a>
+    <div class="github-tooltip">查看源代码 ⭐ Star 支持</div>
+
+    <canvas id="processCanvas" class="hidden-canvas"></canvas>
+    
+    <div class="processing-overlay" id="processingOverlay">
+        <div class="spinner"></div>
+        <p>正在生成图片...</p>
+    </div>
+
+    <script>
+        let currentImage = null;
+        let currentMode = 'leftToRight';
+        let axisPosition = 50;
+        let isDragging = false;
+
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const axisSlider = document.getElementById('axisSlider');
+        const workspace = document.getElementById('workspace');
+        const processedPreview = document.getElementById('processedPreview');
+        const pendingOverlay = document.getElementById('pendingOverlay');
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        axisSlider.addEventListener('input', (e) => {
+            axisPosition = parseInt(e.target.value);
+            document.getElementById('axisValue').textContent = axisPosition + '%';
+            document.getElementById('axisLineOriginal').style.left = axisPosition + '%';
+            
+            if (!isDragging) {
+                isDragging = true;
+                processedPreview.classList.add('pending');
+                pendingOverlay.classList.add('active');
+            }
+        });
+
+        axisSlider.addEventListener('change', (e) => {
+            isDragging = false;
+            if (currentImage) {
+                processImage();
+                processedPreview.classList.remove('pending');
+                pendingOverlay.classList.remove('active');
+            }
+        });
+
+        axisSlider.addEventListener('mousedown', () => {
+            if (currentImage) {
+                isDragging = true;
+                processedPreview.classList.add('pending');
+                pendingOverlay.classList.add('active');
+            }
+        });
+
+        axisSlider.addEventListener('touchstart', () => {
+            if (currentImage) {
+                isDragging = true;
+                processedPreview.classList.add('pending');
+                pendingOverlay.classList.add('active');
+            }
+        }, {passive: true});
+
+        axisSlider.addEventListener('touchend', () => {
+            isDragging = false;
+            if (currentImage) {
+                processImage();
+                processedPreview.classList.remove('pending');
+                pendingOverlay.classList.remove('active');
+            }
+        });
+
+        document.getElementById('quality').addEventListener('input', function() {
+            document.getElementById('qualityLabel').textContent = this.value + '%';
+        });
+
+        document.getElementById('outputFormat').addEventListener('change', function() {
+            const qualityGroup = document.getElementById('qualityGroup');
+            if (this.value === 'image/png') {
+                qualityGroup.style.opacity = '0.5';
+                qualityGroup.querySelector('input').disabled = true;
+            } else {
+                qualityGroup.style.opacity = '1';
+                qualityGroup.querySelector('input').disabled = false;
+            }
+        });
+
+        document.getElementById('addText').addEventListener('change', function() {
+            document.getElementById('textOptions').style.display = this.checked ? 'block' : 'none';
+            if (currentImage) processImage();
+        });
+
+        document.querySelectorAll('#textContent, #fontSize, #textY, #textColor').forEach(el => {
+            el.addEventListener('input', () => {
+                if (currentImage) processImage();
+            });
+        });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('请上传有效的图片文件');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentImage = new Image();
+                currentImage.onload = () => {
+                    document.getElementById('originalPreview').src = e.target.result;
+                    workspace.classList.add('active');
+                    dropZone.style.display = 'none';
+                    processImage();
+                };
+                currentImage.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            
+            document.getElementById('modeLeftToRight').classList.toggle('active', mode === 'leftToRight');
+            document.getElementById('modeRightToLeft').classList.toggle('active', mode === 'rightToLeft');
+            document.getElementById('modeBadge').textContent = mode === 'leftToRight' ? '左 → 右' : '右 → 左';
+            
+            if (currentImage) {
+                processImage();
+            }
+        }
+
+        function processImage() {
+            if (!currentImage) return;
+
+            const canvas = document.getElementById('processCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            const width = currentImage.width;
+            const height = currentImage.height;
+            canvas.width = width;
+            canvas.height = height;
+
+            ctx.clearRect(0, 0, width, height);
+
+            const axisX = Math.floor(width * (axisPosition / 100));
+            const safeAxisX = Math.max(1, Math.min(axisX, width - 1));
+
+            if (currentMode === 'leftToRight') {
+                ctx.drawImage(currentImage, 0, 0, safeAxisX, height, 0, 0, safeAxisX, height);
+                
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = safeAxisX;
+                tempCanvas.height = height;
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                tempCtx.translate(safeAxisX, 0);
+                tempCtx.scale(-1, 1);
+                tempCtx.drawImage(currentImage, 0, 0, safeAxisX, height, 0, 0, safeAxisX, height);
+                
+                const rightWidth = width - safeAxisX;
+                if (rightWidth > 0) {
+                    ctx.drawImage(tempCanvas, safeAxisX, 0, rightWidth, height);
+                }
+                
+            } else {
+                const rightWidth = width - safeAxisX;
+                ctx.drawImage(currentImage, safeAxisX, 0, rightWidth, height, safeAxisX, 0, rightWidth, height);
+                
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = rightWidth;
+                tempCanvas.height = height;
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                tempCtx.translate(rightWidth, 0);
+                tempCtx.scale(-1, 1);
+                tempCtx.drawImage(currentImage, safeAxisX, 0, rightWidth, height, 0, 0, rightWidth, height);
+                
+                if (safeAxisX > 0) {
+                    ctx.drawImage(tempCanvas, 0, 0, safeAxisX, height);
+                }
+            }
+
+            if (document.getElementById('addText').checked) {
+                const text = document.getElementById('textContent').value;
+                const fontSize = parseInt(document.getElementById('fontSize').value);
+                const textYPercent = parseInt(document.getElementById('textY').value);
+                const color = document.getElementById('textColor').value;
+                
+                const x = width / 2;
+                const y = height * (textYPercent / 100);
+                
+                ctx.font = `bold ${fontSize}px "Microsoft YaHei", Arial, sans-serif`;
+                ctx.fillStyle = color;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                ctx.shadowBlur = 4;
+                ctx.shadowOffsetX = 2;
+                ctx.shadowOffsetY = 2;
+                
+                ctx.fillText(text, x, y);
+                ctx.shadowColor = 'transparent';
+            }
+
+            const processedUrl = canvas.toDataURL('image/png');
+            processedPreview.src = processedUrl;
+        }
+
+        function downloadImage() {
+            const canvas = document.getElementById('processCanvas');
+            const format = document.getElementById('outputFormat').value;
+            const quality = parseInt(document.getElementById('quality').value) / 100;
+            
+            document.getElementById('processingOverlay').classList.add('active');
+            
+            setTimeout(() => {
+                let dataUrl;
+                if (format === 'image/png') {
+                    dataUrl = canvas.toDataURL('image/png');
+                } else {
+                    dataUrl = canvas.toDataURL(format, quality);
+                }
+                
+                const link = document.createElement('a');
+                const timestamp = new Date().getTime();
+                const ext = format.split('/')[1];
+                link.download = `qiangqiang_${timestamp}.${ext}`;
+                link.href = dataUrl;
+                link.click();
+                
+                document.getElementById('processingOverlay').classList.remove('active');
+            }, 100);
+        }
+
+        function resetAll() {
+            currentImage = null;
+            fileInput.value = '';
+            workspace.classList.remove('active');
+            dropZone.style.display = 'block';
+            axisSlider.value = 50;
+            axisPosition = 50;
+            isDragging = false;
+            document.getElementById('axisValue').textContent = '50%';
+            document.getElementById('axisLineOriginal').style.left = '50%';
+            processedPreview.classList.remove('pending');
+            pendingOverlay.classList.remove('active');
+            setMode('leftToRight');
+            
+            document.getElementById('originalPreview').src = '';
+            document.getElementById('processedPreview').src = '';
+        }
+
+        document.getElementById('axisLineOriginal').style.left = '50%';
+    </script>
+</body>
+</html>
