@@ -101,7 +101,6 @@
             margin-bottom: 10px;
         }
 
-        /* 图片展示区域 - 无文字纯图片 */
         .demo-section {
             margin-top: 30px;
             padding-top: 30px;
@@ -226,6 +225,15 @@
             transition: left 0.1s ease;
         }
 
+        .axis-line.horizontal {
+            left: 0;
+            right: 0;
+            width: auto;
+            height: 2px;
+            top: 50%;
+            transition: top 0.1s ease;
+        }
+
         .axis-line::before {
             content: '对称轴';
             position: absolute;
@@ -241,6 +249,13 @@
             white-space: nowrap;
         }
 
+        .axis-line.horizontal::before {
+            top: 50%;
+            left: auto;
+            right: 10px;
+            transform: translateY(-50%);
+        }
+
         .axis-line::after {
             content: '';
             position: absolute;
@@ -253,6 +268,12 @@
             border: 2px solid white;
             border-radius: 50%;
             box-shadow: 0 0 0 2px #e53e3e;
+        }
+
+        .axis-line.horizontal::after {
+            left: auto;
+            right: 50%;
+            margin-right: -6px;
         }
 
         .pending-overlay {
@@ -344,6 +365,33 @@
             border-color: #2a5298;
             background: #2a5298;
             color: white;
+        }
+
+        .orientation-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: #e2e8f0;
+            padding: 5px;
+            border-radius: 10px;
+        }
+
+        .orientation-tab {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .orientation-tab.active {
+            background: white;
+            color: #2a5298;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         .slider-container {
@@ -478,6 +526,57 @@
             height: 18px;
             accent-color: #2a5298;
             cursor: pointer;
+        }
+
+        /* 切换开关样式 */
+        .toggle-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+            margin-bottom: 20px;
+        }
+
+        .toggle-label {
+            font-weight: 600;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: #e2e8f0;
+            border-radius: 13px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: #2a5298;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(24px);
         }
 
         .btn-group {
@@ -688,7 +787,7 @@
     <div class="container">
         <div class="header">
             <h1>？！强强！？生成器</h1>
-            <p>一键生成对称魔性表情包</p>
+            <p>一键生成对称魔性表情包（支持左右/上下对称）</p>
         </div>
 
         <div class="main-content">
@@ -699,7 +798,6 @@
                 <div class="upload-text">点击或拖拽上传图片</div>
                 <div class="upload-hint">支持 JPG、PNG、WebP 格式</div>
                 
-                <!-- 纯图片展示区域 -->
                 <div class="demo-section">
                     <div class="demo-grid">
                         <div class="demo-item">
@@ -745,9 +843,49 @@
                 </div>
 
                 <div class="controls-panel">
+                    <!-- 1. 对称轴位置 -->
+                    <div class="control-section">
+                        <div class="section-title" id="axisTitle">对称轴位置（水平）</div>
+                        <div class="slider-container">
+                            <div class="slider-header">
+                                <span class="slider-label" id="axisLabel">水平位置</span>
+                                <span class="slider-value" id="axisValue">50%</span>
+                            </div>
+                            <input type="range" class="slider" id="axisSlider" min="1" max="99" value="50">
+                            <div class="slider-hint">拖动调整位置，释放鼠标后自动渲染预览</div>
+                        </div>
+                    </div>
+
+                    <!-- 2. 填充模式切换 -->
+                    <div class="control-section">
+                        <div class="toggle-wrapper">
+                            <span class="toggle-label">
+                                <span>🔧</span>
+                                自动拉伸填充
+                            </span>
+                            <div class="toggle-switch active" id="stretchToggle" onclick="toggleStretch()"></div>
+                        </div>
+                        <div class="fill-mode-hint" id="stretchHint">
+                            💡 开启：保持原图尺寸，镜像自动拉伸填满对称侧<br>
+                            💡 关闭：改变图片尺寸，仅保留对称的一半+镜像（无变形）
+                        </div>
+                    </div>
+
+                    <!-- 3. 对称方向 -->
                     <div class="control-section">
                         <div class="section-title">对称方向</div>
-                        <div class="symmetry-mode">
+                        
+                        <div class="orientation-tabs">
+                            <button class="orientation-tab active" id="tabHorizontal" onclick="setOrientation('horizontal')">
+                                ↔️ 左右对称
+                            </button>
+                            <button class="orientation-tab" id="tabVertical" onclick="setOrientation('vertical')">
+                                ↕️ 上下对称
+                            </button>
+                        </div>
+
+                        <!-- 左右对称模式 -->
+                        <div id="horizontalModes" class="symmetry-mode">
                             <button class="mode-btn active" id="modeLeftToRight" onclick="setMode('leftToRight')">
                                 <span>←</span>
                                 左半边 → 右半边
@@ -757,30 +895,28 @@
                                 右半边 → 左半边
                             </button>
                         </div>
-                        <div class="fill-mode-hint">
-                            💡 自动拉伸填充：当两侧宽度不同时，镜像内容会自动拉伸以填满目标区域
+
+                        <!-- 上下对称模式 -->
+                        <div id="verticalModes" class="symmetry-mode" style="display: none;">
+                            <button class="mode-btn active" id="modeTopToBottom" onclick="setMode('topToBottom')">
+                                <span>↑</span>
+                                上半边 → 下半边
+                            </button>
+                            <button class="mode-btn" id="modeBottomToTop" onclick="setMode('bottomToTop')">
+                                <span>↓</span>
+                                下半边 → 上半边
+                            </button>
                         </div>
                     </div>
 
-                    <div class="control-section">
-                        <div class="section-title">对称轴位置</div>
-                        <div class="slider-container">
-                            <div class="slider-header">
-                                <span class="slider-label">水平位置</span>
-                                <span class="slider-value" id="axisValue">50%</span>
-                            </div>
-                            <input type="range" class="slider" id="axisSlider" min="1" max="99" value="50">
-                            <div class="slider-hint">拖动调整位置，释放鼠标后自动渲染预览</div>
-                        </div>
-                    </div>
-
-                    <div class="control-section">
+                    <!-- 4. 文字水印选项（默认关闭） -->
+                    <div class="control-section" style="margin-top: 25px; padding-top: 25px; border-top: 2px solid #e2e8f0;">
                         <label class="checkbox-wrapper">
-                            <input type="checkbox" id="addText" checked>
+                            <input type="checkbox" id="addText">
                             <span>添加文字水印（可选）</span>
                         </label>
                         
-                        <div id="textOptions" style="display: block;">
+                        <div id="textOptions" style="display: none;">
                             <div class="text-controls">
                                 <div class="input-group">
                                     <label class="input-label">文字内容</label>
@@ -802,6 +938,7 @@
                         </div>
                     </div>
 
+                    <!-- 5. 输出设置 -->
                     <div class="control-section" style="margin-top: 25px; padding-top: 25px; border-top: 2px solid #e2e8f0;">
                         <div class="section-title">输出设置</div>
                         <div class="text-controls">
@@ -851,9 +988,11 @@
 
     <script>
         let currentImage = null;
+        let currentOrientation = 'horizontal';
         let currentMode = 'leftToRight';
         let axisPosition = 50;
         let isDragging = false;
+        let stretchMode = true; // 默认开启拉伸填充
 
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
@@ -861,7 +1000,9 @@
         const workspace = document.getElementById('workspace');
         const processedPreview = document.getElementById('processedPreview');
         const pendingOverlay = document.getElementById('pendingOverlay');
+        const axisLineOriginal = document.getElementById('axisLineOriginal');
 
+        // 拖拽上传
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
             dropZone.classList.add('dragover');
@@ -885,11 +1026,23 @@
             }
         });
 
+        // 滑块拖动时：仅更新参考线和数值（轻量级）
         axisSlider.addEventListener('input', (e) => {
             axisPosition = parseInt(e.target.value);
             document.getElementById('axisValue').textContent = axisPosition + '%';
-            document.getElementById('axisLineOriginal').style.left = axisPosition + '%';
             
+            // 更新预览线位置
+            if (currentOrientation === 'horizontal') {
+                axisLineOriginal.style.left = axisPosition + '%';
+                axisLineOriginal.style.top = '0';
+                axisLineOriginal.classList.remove('horizontal');
+            } else {
+                axisLineOriginal.style.top = axisPosition + '%';
+                axisLineOriginal.style.left = '0';
+                axisLineOriginal.classList.add('horizontal');
+            }
+            
+            // 显示等待提示
             if (!isDragging) {
                 isDragging = true;
                 processedPreview.classList.add('pending');
@@ -897,6 +1050,7 @@
             }
         });
 
+        // 滑块释放时：执行渲染（重量级）
         axisSlider.addEventListener('change', (e) => {
             isDragging = false;
             if (currentImage) {
@@ -906,6 +1060,7 @@
             }
         });
 
+        // 鼠标按下时也显示提示
         axisSlider.addEventListener('mousedown', () => {
             if (currentImage) {
                 isDragging = true;
@@ -914,6 +1069,7 @@
             }
         });
 
+        // 触摸设备支持
         axisSlider.addEventListener('touchstart', () => {
             if (currentImage) {
                 isDragging = true;
@@ -931,10 +1087,12 @@
             }
         });
 
+        // 质量滑块
         document.getElementById('quality').addEventListener('input', function() {
             document.getElementById('qualityLabel').textContent = this.value + '%';
         });
 
+        // 格式选择
         document.getElementById('outputFormat').addEventListener('change', function() {
             const qualityGroup = document.getElementById('qualityGroup');
             if (this.value === 'image/png') {
@@ -946,17 +1104,29 @@
             }
         });
 
+        // 文字选项切换
         document.getElementById('addText').addEventListener('change', function() {
             document.getElementById('textOptions').style.display = this.checked ? 'block' : 'none';
             if (currentImage) processImage();
         });
 
+        // 其他控制项实时更新
         document.querySelectorAll('#textContent, #fontSize, #textY, #textColor').forEach(el => {
             el.addEventListener('input', () => {
                 if (currentImage) processImage();
             });
         });
 
+        // 切换拉伸模式
+        function toggleStretch() {
+            stretchMode = !stretchMode;
+            document.getElementById('stretchToggle').classList.toggle('active', stretchMode);
+            if (currentImage) {
+                processImage();
+            }
+        }
+
+        // 处理文件
         function handleFile(file) {
             if (!file.type.startsWith('image/')) {
                 alert('请上传有效的图片文件');
@@ -977,18 +1147,71 @@
             reader.readAsDataURL(file);
         }
 
-        function setMode(mode) {
-            currentMode = mode;
+        // 切换对称方向（左右/上下）
+        function setOrientation(orientation) {
+            currentOrientation = orientation;
             
-            document.getElementById('modeLeftToRight').classList.toggle('active', mode === 'leftToRight');
-            document.getElementById('modeRightToLeft').classList.toggle('active', mode === 'rightToLeft');
-            document.getElementById('modeBadge').textContent = mode === 'leftToRight' ? '左 → 右' : '右 → 左';
+            // 更新标签样式
+            document.getElementById('tabHorizontal').classList.toggle('active', orientation === 'horizontal');
+            document.getElementById('tabVertical').classList.toggle('active', orientation === 'vertical');
+            
+            // 显示/隐藏对应模式按钮
+            document.getElementById('horizontalModes').style.display = orientation === 'horizontal' ? 'flex' : 'none';
+            document.getElementById('verticalModes').style.display = orientation === 'vertical' ? 'flex' : 'none';
+            
+            // 更新标题和标签
+            document.getElementById('axisTitle').textContent = orientation === 'horizontal' ? '对称轴位置（水平）' : '对称轴位置（垂直）';
+            document.getElementById('axisLabel').textContent = orientation === 'horizontal' ? '水平位置' : '垂直位置';
+            
+            // 重置对称轴线和位置
+            axisPosition = 50;
+            axisSlider.value = 50;
+            document.getElementById('axisValue').textContent = '50%';
+            
+            if (orientation === 'horizontal') {
+                axisLineOriginal.style.left = '50%';
+                axisLineOriginal.style.top = '0';
+                axisLineOriginal.classList.remove('horizontal');
+                setMode('leftToRight');
+            } else {
+                axisLineOriginal.style.top = '50%';
+                axisLineOriginal.style.left = '0';
+                axisLineOriginal.classList.add('horizontal');
+                setMode('topToBottom');
+            }
             
             if (currentImage) {
                 processImage();
             }
         }
 
+        // 设置对称模式
+        function setMode(mode) {
+            currentMode = mode;
+            
+            // 更新按钮状态
+            const allModes = ['modeLeftToRight', 'modeRightToLeft', 'modeTopToBottom', 'modeBottomToTop'];
+            allModes.forEach(id => {
+                document.getElementById(id)?.classList.remove('active');
+            });
+            
+            document.getElementById('mode' + mode.charAt(0).toUpperCase() + mode.slice(1))?.classList.add('active');
+            
+            // 更新徽章
+            const badgeMap = {
+                'leftToRight': '左 → 右',
+                'rightToLeft': '右 → 左',
+                'topToBottom': '上 → 下',
+                'bottomToTop': '下 → 上'
+            };
+            document.getElementById('modeBadge').textContent = badgeMap[mode];
+            
+            if (currentImage) {
+                processImage();
+            }
+        }
+
+        // 核心处理函数 - 根据 stretchMode 选择算法
         function processImage() {
             if (!currentImage) return;
 
@@ -997,57 +1220,148 @@
             
             const width = currentImage.width;
             const height = currentImage.height;
-            canvas.width = width;
-            canvas.height = height;
 
-            ctx.clearRect(0, 0, width, height);
+            if (stretchMode) {
+                // ========== 拉伸模式（保持原图尺寸） ==========
+                canvas.width = width;
+                canvas.height = height;
+                ctx.clearRect(0, 0, width, height);
 
-            const axisX = Math.floor(width * (axisPosition / 100));
-            const safeAxisX = Math.max(1, Math.min(axisX, width - 1));
+                if (currentOrientation === 'horizontal') {
+                    // 左右对称 - 拉伸填充
+                    const axisX = Math.floor(width * (axisPosition / 100));
+                    const safeAxisX = Math.max(1, Math.min(axisX, width - 1));
 
-            if (currentMode === 'leftToRight') {
-                ctx.drawImage(currentImage, 0, 0, safeAxisX, height, 0, 0, safeAxisX, height);
-                
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = safeAxisX;
-                tempCanvas.height = height;
-                const tempCtx = tempCanvas.getContext('2d');
-                
-                tempCtx.translate(safeAxisX, 0);
-                tempCtx.scale(-1, 1);
-                tempCtx.drawImage(currentImage, 0, 0, safeAxisX, height, 0, 0, safeAxisX, height);
-                
-                const rightWidth = width - safeAxisX;
-                if (rightWidth > 0) {
-                    ctx.drawImage(tempCanvas, safeAxisX, 0, rightWidth, height);
+                    if (currentMode === 'leftToRight') {
+                        ctx.drawImage(currentImage, 0, 0, safeAxisX, height, 0, 0, safeAxisX, height);
+                        
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = safeAxisX;
+                        tempCanvas.height = height;
+                        const tempCtx = tempCanvas.getContext('2d');
+                        
+                        tempCtx.translate(safeAxisX, 0);
+                        tempCtx.scale(-1, 1);
+                        tempCtx.drawImage(currentImage, 0, 0, safeAxisX, height, 0, 0, safeAxisX, height);
+                        
+                        const rightWidth = width - safeAxisX;
+                        if (rightWidth > 0) {
+                            ctx.drawImage(tempCanvas, safeAxisX, 0, rightWidth, height);
+                        }
+                    } else {
+                        const rightWidth = width - safeAxisX;
+                        ctx.drawImage(currentImage, safeAxisX, 0, rightWidth, height, safeAxisX, 0, rightWidth, height);
+                        
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = rightWidth;
+                        tempCanvas.height = height;
+                        const tempCtx = tempCanvas.getContext('2d');
+                        
+                        tempCtx.translate(rightWidth, 0);
+                        tempCtx.scale(-1, 1);
+                        tempCtx.drawImage(currentImage, safeAxisX, 0, rightWidth, height, 0, 0, rightWidth, height);
+                        
+                        if (safeAxisX > 0) {
+                            ctx.drawImage(tempCanvas, 0, 0, safeAxisX, height);
+                        }
+                    }
+                } else {
+                    // 上下对称 - 拉伸填充
+                    const axisY = Math.floor(height * (axisPosition / 100));
+                    const safeAxisY = Math.max(1, Math.min(axisY, height - 1));
+
+                    if (currentMode === 'topToBottom') {
+                        ctx.drawImage(currentImage, 0, 0, width, safeAxisY, 0, 0, width, safeAxisY);
+                        
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = width;
+                        tempCanvas.height = safeAxisY;
+                        const tempCtx = tempCanvas.getContext('2d');
+                        
+                        tempCtx.translate(0, safeAxisY);
+                        tempCtx.scale(1, -1);
+                        tempCtx.drawImage(currentImage, 0, 0, width, safeAxisY, 0, 0, width, safeAxisY);
+                        
+                        const bottomHeight = height - safeAxisY;
+                        if (bottomHeight > 0) {
+                            ctx.drawImage(tempCanvas, 0, safeAxisY, width, bottomHeight);
+                        }
+                    } else {
+                        const bottomHeight = height - safeAxisY;
+                        ctx.drawImage(currentImage, 0, safeAxisY, width, bottomHeight, 0, safeAxisY, width, bottomHeight);
+                        
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = width;
+                        tempCanvas.height = bottomHeight;
+                        const tempCtx = tempCanvas.getContext('2d');
+                        
+                        tempCtx.translate(0, bottomHeight);
+                        tempCtx.scale(1, -1);
+                        tempCtx.drawImage(currentImage, 0, safeAxisY, width, bottomHeight, 0, 0, width, bottomHeight);
+                        
+                        if (safeAxisY > 0) {
+                            ctx.drawImage(tempCanvas, 0, 0, width, safeAxisY);
+                        }
+                    }
                 }
-                
             } else {
-                const rightWidth = width - safeAxisX;
-                ctx.drawImage(currentImage, safeAxisX, 0, rightWidth, height, safeAxisX, 0, rightWidth, height);
-                
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = rightWidth;
-                tempCanvas.height = height;
-                const tempCtx = tempCanvas.getContext('2d');
-                
-                tempCtx.translate(rightWidth, 0);
-                tempCtx.scale(-1, 1);
-                tempCtx.drawImage(currentImage, safeAxisX, 0, rightWidth, height, 0, 0, rightWidth, height);
-                
-                if (safeAxisX > 0) {
-                    ctx.drawImage(tempCanvas, 0, 0, safeAxisX, height);
+                // ========== 不拉伸模式（改变图片尺寸） ==========
+                if (currentOrientation === 'horizontal') {
+                    const axisX = Math.floor(width * (axisPosition / 100));
+                    const safeAxisX = Math.max(1, Math.min(axisX, width - 1));
+                    const newWidth = safeAxisX * 2;
+                    
+                    canvas.width = newWidth;
+                    canvas.height = height;
+                    ctx.clearRect(0, 0, newWidth, height);
+
+                    if (currentMode === 'leftToRight') {
+                        ctx.drawImage(currentImage, 0, 0, safeAxisX, height, 0, 0, safeAxisX, height);
+                        ctx.translate(newWidth, 0);
+                        ctx.scale(-1, 1);
+                        ctx.drawImage(currentImage, 0, 0, safeAxisX, height, 0, 0, safeAxisX, height);
+                    } else {
+                        const rightWidth = width - safeAxisX;
+                        ctx.translate(rightWidth, 0);
+                        ctx.scale(-1, 1);
+                        ctx.drawImage(currentImage, safeAxisX, 0, rightWidth, height, 0, 0, rightWidth, height);
+                        ctx.setTransform(1, 0, 0, 1, 0, 0);
+                        ctx.drawImage(currentImage, safeAxisX, 0, rightWidth, height, rightWidth, 0, rightWidth, height);
+                    }
+                } else {
+                    const axisY = Math.floor(height * (axisPosition / 100));
+                    const safeAxisY = Math.max(1, Math.min(axisY, height - 1));
+                    const newHeight = safeAxisY * 2;
+                    
+                    canvas.width = width;
+                    canvas.height = newHeight;
+                    ctx.clearRect(0, 0, width, newHeight);
+
+                    if (currentMode === 'topToBottom') {
+                        ctx.drawImage(currentImage, 0, 0, width, safeAxisY, 0, 0, width, safeAxisY);
+                        ctx.translate(0, newHeight);
+                        ctx.scale(1, -1);
+                        ctx.drawImage(currentImage, 0, 0, width, safeAxisY, 0, 0, width, safeAxisY);
+                    } else {
+                        const bottomHeight = height - safeAxisY;
+                        ctx.translate(0, bottomHeight);
+                        ctx.scale(1, -1);
+                        ctx.drawImage(currentImage, 0, safeAxisY, width, bottomHeight, 0, 0, width, bottomHeight);
+                        ctx.setTransform(1, 0, 0, 1, 0, 0);
+                        ctx.drawImage(currentImage, 0, safeAxisY, width, bottomHeight, 0, bottomHeight, width, bottomHeight);
+                    }
                 }
             }
 
+            // 添加文字（如果需要）
             if (document.getElementById('addText').checked) {
                 const text = document.getElementById('textContent').value;
                 const fontSize = parseInt(document.getElementById('fontSize').value);
                 const textYPercent = parseInt(document.getElementById('textY').value);
                 const color = document.getElementById('textColor').value;
                 
-                const x = width / 2;
-                const y = height * (textYPercent / 100);
+                const x = canvas.width / 2;
+                const y = canvas.height * (textYPercent / 100);
                 
                 ctx.font = `bold ${fontSize}px "Microsoft YaHei", Arial, sans-serif`;
                 ctx.fillStyle = color;
@@ -1067,6 +1381,7 @@
             processedPreview.src = processedUrl;
         }
 
+        // 下载图片
         function downloadImage() {
             const canvas = document.getElementById('processCanvas');
             const format = document.getElementById('outputFormat').value;
@@ -1093,6 +1408,7 @@
             }, 100);
         }
 
+        // 重置
         function resetAll() {
             currentImage = null;
             fileInput.value = '';
@@ -1102,16 +1418,26 @@
             axisPosition = 50;
             isDragging = false;
             document.getElementById('axisValue').textContent = '50%';
-            document.getElementById('axisLineOriginal').style.left = '50%';
+            
+            if (currentOrientation === 'horizontal') {
+                axisLineOriginal.style.left = '50%';
+                axisLineOriginal.style.top = '0';
+                axisLineOriginal.classList.remove('horizontal');
+            } else {
+                axisLineOriginal.style.top = '50%';
+                axisLineOriginal.style.left = '0';
+                axisLineOriginal.classList.add('horizontal');
+            }
+            
             processedPreview.classList.remove('pending');
             pendingOverlay.classList.remove('active');
-            setMode('leftToRight');
             
             document.getElementById('originalPreview').src = '';
             document.getElementById('processedPreview').src = '';
         }
 
-        document.getElementById('axisLineOriginal').style.left = '50%';
+        // 初始化
+        axisLineOriginal.style.left = '50%';
     </script>
 </body>
 </html>
